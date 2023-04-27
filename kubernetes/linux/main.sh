@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Get the start time of the setup in seconds
+startTime=$(date +%s)
+
 gracefulShutdown() {
       echo "gracefulShutdown start @ `date --rfc-3339=seconds`"
       echo "gracefulShutdown fluent-bit process start @ `date --rfc-3339=seconds`"
@@ -1034,20 +1037,20 @@ echo "export HOST_VAR=/hostfs/var" >>~/.bashrc
 if [ ! -e "/etc/config/kube.conf" ] && [ "${GENEVA_LOGS_INTEGRATION_SERVICE_MODE}" != "true" ]; then
       if [ "${CONTAINER_TYPE}" == "PrometheusSidecar" ]; then
             if [ "${MUTE_PROM_SIDECAR}" != "true" ]; then
-                  echo "checking for listener on tcp #25229 and waiting for 30 secs if not.."
-                  waitforlisteneronTCPport 25229 30
+                  echo "checking for listener on tcp #25229 and waiting for $WAITTIME_PORT_25229 secs if not.."
+                  waitforlisteneronTCPport 25229 $WAITTIME_PORT_25229
             else
                   echo "no metrics to scrape since MUTE_PROM_SIDECAR is true, not checking for listener on tcp #25229"
             fi
       else
-            echo "checking for listener on tcp #25226 and waiting for 30 secs if not.."
-            waitforlisteneronTCPport 25226 30
-            echo "checking for listener on tcp #25228 and waiting for 30 secs if not.."
-            waitforlisteneronTCPport 25228 30
+            echo "checking for listener on tcp #25226 and waiting for $WAITTIME_PORT_25226 secs if not.."
+            waitforlisteneronTCPport 25226 $WAITTIME_PORT_25226
+            echo "checking for listener on tcp #25228 and waiting for $WAITTIME_PORT_25228 secs if not.."
+            waitforlisteneronTCPport 25228 $WAITTIME_PORT_25228
       fi
 elif [ "${GENEVA_LOGS_INTEGRATION_SERVICE_MODE}" != "true" ]; then
-        echo "checking for listener on tcp #25226 and waiting for 30 secs if not.."
-        waitforlisteneronTCPport 25226 30
+        echo "checking for listener on tcp #25226 and waiting for $WAITTIME_PORT_25226 secs if not.."
+        waitforlisteneronTCPport 25226 $WAITTIME_PORT_25226
 fi
 
 
@@ -1074,6 +1077,11 @@ elif [ "${MUTE_PROM_SIDECAR}" != "true" ]; then
 else
       echo "not checking onboarding status (no metrics to scrape since MUTE_PROM_SIDECAR is true)"
 fi
+
+# Get the end time of the setup in seconds
+endTime=$(date +%s)
+elapsed=$((endTime-startTime))
+echo "startup script took: $elapsed seconds"
 
 shutdown() {
      if [ "${GENEVA_LOGS_INTEGRATION_SERVICE_MODE}" == "true" ]; then
