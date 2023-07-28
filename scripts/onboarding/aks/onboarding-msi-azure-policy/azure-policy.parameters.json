@@ -9,7 +9,7 @@
       "type": "string"
     },
     "enableSyslog": {
-      "type": "boolean",
+      "type": "bool",
       "defaultValue": false
     },
     "syslogLevels": {
@@ -68,5 +68,9 @@
       "defaultValue": [
         "kube-system", "gatekeeper-system", "azure-arc"
       ]
+    },
+    "enableContainerLogV2": {
+      "type": "bool",
+      "defaultValue": true
     }
 }

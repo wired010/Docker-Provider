@@ -60,6 +60,9 @@
 				},
 				"namespacesForDataCollection": {
 				  "type": "array"
+				},
+				"enableContainerLogV2": {
+				  "type": "bool"
 				}
 			  },
 			  "variables": {
@@ -97,7 +100,8 @@
 												"dataCollectionSettings" : {
 													"interval": "[parameters('dataCollectionInterval')]",
 													"namespaceFilteringMode": "[parameters('namespaceFilteringModeForDataCollection')]",
-													"namespaces": "[parameters('namespacesForDataCollection')]"
+													"namespaces": "[parameters('namespacesForDataCollection')]",
+													"enableContainerLogV2": "[parameters('enableContainerLogV2')]"
 												}
 											},
 											"extensionName": "ContainerInsights"
@@ -161,7 +165,8 @@
 												"dataCollectionSettings" : {
 													"interval": "[parameters('dataCollectionInterval')]",
 													"namespaceFilteringMode": "[parameters('namespaceFilteringModeForDataCollection')]",
-													"namespaces": "[parameters('namespacesForDataCollection')]"
+													"namespaces": "[parameters('namespacesForDataCollection')]",
+													"enableContainerLogV2": "[parameters('enableContainerLogV2')]"
 												}
 											},
 											"extensionName": "ContainerInsights"
