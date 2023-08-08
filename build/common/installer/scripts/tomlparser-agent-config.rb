@@ -83,6 +83,7 @@ require_relative "ConfigParseErrorLogger"
 # Checking to see if container is not prometheus sidecar.
 # CONTAINER_TYPE is populated only for prometheus sidecar container.
 @containerType = ENV["CONTAINER_TYPE"]
+@containerMemoryLimitInBytes = ENV["CONTAINER_MEMORY_LIMIT_IN_BYTES"]
 
 @promFbitChunkSize = 0
 @promFbitBufferSize = 0
@@ -268,11 +269,12 @@ def populateSettingValuesFromConfigMap(parsedConfig)
           puts "Using config map value: require_ack_response = #{@requireAckResponse}"
         end
       end
-      # ama-logs daemonset only settings
-      if !@controllerType.nil? && !@controllerType.empty? && @controllerType.strip.casecmp(@daemonset) == 0 && @containerType.nil?
-        # mdsd settings
-        mdsd_config = parsedConfig[:agent_settings][:mdsd_config]
-        if !mdsd_config.nil?
+
+      # mdsd settings
+      mdsd_config = parsedConfig[:agent_settings][:mdsd_config]
+      if !mdsd_config.nil?
+        # ama-logs daemonset only settings
+        if !@controllerType.nil? && !@controllerType.empty? && @controllerType.strip.casecmp(@daemonset) == 0 && @containerType.nil?
           mdsdMonitoringMaxEventRate = mdsd_config[:monitoring_max_event_rate]
           if is_valid_number?(mdsdMonitoringMaxEventRate)
             @mdsdMonitoringMaxEventRate = mdsdMonitoringMaxEventRate.to_i
@@ -288,13 +290,6 @@ def populateSettingValuesFromConfigMap(parsedConfig)
             @mdsdUploadFrequencyInSeconds = mdsdUploadFrequencyInSeconds.to_i
             puts "Using config map value: upload_frequency_seconds  = #{@mdsdUploadFrequencyInSeconds}"
           end
-          mdsdBackPressureThresholdInMB = mdsd_config[:backpressure_memory_threshold_in_mb]
-          if is_valid_number?(mdsdBackPressureThresholdInMB) && mdsdBackPressureThresholdInMB.to_i > 100
-            @mdsdBackPressureThresholdInMB = mdsdBackPressureThresholdInMB.to_i
-            puts "Using config map value: backpressure_memory_threshold_in_mb  = #{@mdsdBackPressureThresholdInMB}"
-          else
-            puts "Ignoring mdsd backpressure limit. Check input values for correctness."
-          end
           mdsdCompressionLevel = mdsd_config[:compression_level]
           if is_number?(mdsdCompressionLevel) && mdsdCompressionLevel.to_i >= 0 && mdsdCompressionLevel.to_i < 10 # supported levels from 0 to 9
             @mdsdCompressionLevel = mdsdCompressionLevel.to_i
@@ -302,6 +297,14 @@ def populateSettingValuesFromConfigMap(parsedConfig)
           else
             puts "Ignoring mdsd compression_level level since its not supported level. Check input values for correctness."
           end
+        end
+
+        mdsdBackPressureThresholdInMB = mdsd_config[:backpressure_memory_threshold_in_mb]
+        if is_valid_number?(mdsdBackPressureThresholdInMB) && is_valid_number?(@containerMemoryLimitInBytes) && mdsdBackPressureThresholdInMB.to_i < (@containerMemoryLimitInBytes.to_i / 1048576) && mdsdBackPressureThresholdInMB.to_i > 100
+          @mdsdBackPressureThresholdInMB = mdsdBackPressureThresholdInMB.to_i
+          puts "Using config map value: backpressure_memory_threshold_in_mb  = #{@mdsdBackPressureThresholdInMB}"
+        else
+          puts "Ignoring mdsd backpressure limit. Check input values for correctness. Configmap value in mb: #{mdsdBackPressureThresholdInMB}, container limit in bytes: #{@containerMemoryLimitInBytes}"
         end
       end
 
@@ -443,7 +446,7 @@ if !file.nil?
   end
 
   if @mdsdBackPressureThresholdInMB > 0
-    file.write("export MDSD_BACKPRESSURE_MONITOR_MEMORY_THRESHOLD_IN_MB=#{@mdsdBackPressureThresholdInMB}\n")
+    file.write("export BACKPRESSURE_THRESHOLD_IN_MB=#{@mdsdBackPressureThresholdInMB}\n")
   end
 
   if @mdsdCompressionLevel >= 0

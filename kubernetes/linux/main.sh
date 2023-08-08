@@ -855,6 +855,28 @@ else
 fi
 source ~/.bashrc
 
+# manually set backpressure value using container limit only when neither backpressure or fbit tail buffer is provided through configmap
+if [ -n "${BACKPRESSURE_THRESHOLD_IN_MB}" ]; then
+      export MDSD_BACKPRESSURE_MONITOR_MEMORY_THRESHOLD_IN_MB=${BACKPRESSURE_THRESHOLD_IN_MB}
+      echo "export MDSD_BACKPRESSURE_MONITOR_MEMORY_THRESHOLD_IN_MB=$MDSD_BACKPRESSURE_MONITOR_MEMORY_THRESHOLD_IN_MB" >> ~/.bashrc
+      echo "Setting MDSD backpressure threshold from configmap: ${MDSD_BACKPRESSURE_MONITOR_MEMORY_THRESHOLD_IN_MB} MB"
+      source ~/.bashrc
+elif [ -z "${FBIT_TAIL_MEM_BUF_LIMIT}" ]; then
+      if [ -n "${CONTAINER_MEMORY_LIMIT_IN_BYTES}" ]; then
+            echo "Container limit in bytes: ${CONTAINER_MEMORY_LIMIT_IN_BYTES}"
+            limit_in_mebibytes=$((CONTAINER_MEMORY_LIMIT_IN_BYTES / 1048576))
+
+            export MDSD_BACKPRESSURE_MONITOR_MEMORY_THRESHOLD_IN_MB=$((limit_in_mebibytes * 50 / 100))
+            echo "export MDSD_BACKPRESSURE_MONITOR_MEMORY_THRESHOLD_IN_MB=$MDSD_BACKPRESSURE_MONITOR_MEMORY_THRESHOLD_IN_MB" >> ~/.bashrc
+            echo "Setting MDSD backpressure threshold as 50 percent of container limit: ${MDSD_BACKPRESSURE_MONITOR_MEMORY_THRESHOLD_IN_MB} MB"
+            source ~/.bashrc
+      else
+            echo "Container limit not found. Not setting mdsd backpressure threshold"
+      fi
+else
+      echo "MDSD backpressure threshold not set since tail_mem_buf_limit_megabytes is used in configmap. Use backpressure_memory_threshold_in_mb in configmap to set it."
+fi
+
 if [ "${CONTAINER_TYPE}" == "PrometheusSidecar" ]; then
     if [ "${MUTE_PROM_SIDECAR}" != "true" ]; then
       echo "starting mdsd with mdsd-port=26130, fluentport=26230 and influxport=26330 in sidecar container..."
