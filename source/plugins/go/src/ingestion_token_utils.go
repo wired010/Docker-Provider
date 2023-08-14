@@ -76,8 +76,8 @@ type AgentConfiguration struct {
 			} `json:"channels"`
 			Extensionconfigurations struct {
 				Containerinsights []struct {
-					ID            string   `json:"id"`
-					Originids     []string `json:"originIds"`
+					ID                string   `json:"id"`
+					Originids         []string `json:"originIds"`
 					Extensionsettings struct {
 						DataCollectionSettings struct {
 							Interval               string   `json:"interval"`
@@ -669,12 +669,18 @@ func refreshIngestionAuthToken() {
 	}
 }
 
+//true if httpStatusCode is retriable; otherwise, false.
 func IsRetriableError(httpStatusCode int) bool {
-	retryableStatusCodes := [5]int{408, 429, 502, 503, 504}
+	retryableStatusCodes := [6]int{408, 429, 500, 502, 503, 504}
 	for _, code := range retryableStatusCodes {
 		if code == httpStatusCode {
 			return true
 		}
 	}
 	return false
+}
+
+//true if httpStatusCode was in the range 200-299; otherwise, false.
+func IsSuccessStatusCode(httpStatusCode int) bool {
+	return (httpStatusCode >= 200 && httpStatusCode < 300)
 }
