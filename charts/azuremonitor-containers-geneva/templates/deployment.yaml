@@ -18,8 +18,6 @@ spec:
     metadata:
      annotations:
        agentVersion: {{ .Values.image.agentVersion }}
-       prometheus.io/scrape: "true"
-       prometheus.io/port: "9102"
      labels:
        rsName: "ama-logs-geneva"
        aadpodidbinding: {{ .Values.genevaLogsConfig.aadpodidbinding }}
@@ -35,6 +33,10 @@ spec:
          resources:
           {{- toYaml .Values.resources | nindent 12 }}
          env:
+         - name: GENEVA_TELEMETRY_SERVICE_POD_NAMESPACE
+           valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
          - name: ENABLE_FBIT_INTERNAL_METRICS
            value: {{ .Values.enableInternalMetrics | quote }}
          - name: FBIT_SERVICE_GRACE_INTERVAL_SECONDS

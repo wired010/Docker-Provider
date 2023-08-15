@@ -716,6 +716,29 @@ function Bootstrap-CACertificates {
     }
 }
 
+function IsGenevaMode() {
+    $isGenevaLogsIntegration=$false
+    $isGenevaLogsMultitenancy=$false
+    $genevaLogsIntegration = [System.Environment]::GetEnvironmentVariable("GENEVA_LOGS_INTEGRATION")
+    $genevaLogsMultitenancy = [System.Environment]::GetEnvironmentVariable("GENEVA_LOGS_MULTI_TENANCY")
+    $genevaLogsInfraNameSpaces = [System.Environment]::GetEnvironmentVariable("GENEVA_LOGS_INFRA_NAMESPACES")
+    $isGenevaLogsInfraNameSpacesEmpty=$true
+
+    if (![string]::IsNullOrEmpty($genevaLogsIntegration) -and $genevaLogsIntegration.ToLower() -eq 'true') {
+        $isGenevaLogsIntegration=$true
+    }
+    if (![string]::IsNullOrEmpty($genevaLogsMultitenancy) -and $genevaLogsMultitenancy.ToLower() -eq 'true') {
+        $isGenevaLogsMultitenancy=$true
+    }
+    if (![string]::IsNullOrEmpty($genevaLogsInfraNameSpaces)) {
+        $isGenevaLogsInfraNameSpacesEmpty=$false
+    }
+    if ($isGenevaLogsIntegration -and (!$isGenevaLogsMultitenancy -or !$isGenevaLogsInfraNameSpacesEmpty)){
+      return $true
+    }
+    return $false
+}
+
 Set-ProcessAndMachineEnvVariables "COMPlus_ThreadPool_UnfairSemaphoreSpinLimit" "0"
 
 Start-Transcript -Path main.txt
@@ -736,9 +759,8 @@ if (![string]::IsNullOrEmpty($requiresCertBootstrap) -and `
     Bootstrap-CACertificates
 }
 
-$isGenevaLogsIntegration = [System.Environment]::GetEnvironmentVariable("GENEVA_LOGS_INTEGRATION")
 $isAADMSIAuth = [System.Environment]::GetEnvironmentVariable("USING_AAD_MSI_AUTH")
-if (![string]::IsNullOrEmpty($isGenevaLogsIntegration) -and $isGenevaLogsIntegration.ToLower() -eq 'true') {
+if (IsGenevaMode) {
     Write-Host "Starting Windows AMA in 1P Mode"
     #start Windows AMA
     Start-Job -ScriptBlock { Start-Process -NoNewWindow -FilePath "C:\opt\windowsazuremonitoragent\windowsazuremonitoragent\Monitoring\Agent\MonAgentLauncher.exe" -ArgumentList @("-useenv")}
