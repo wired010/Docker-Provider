@@ -3,16 +3,18 @@
 # Get the start time of the setup in seconds
 startTime=$(date +%s)
 
+echo "startup script start @ $(date +'%Y-%m-%dT%H:%M:%S')"
+
 gracefulShutdown() {
-      echo "gracefulShutdown start @ `date --rfc-3339=seconds`"
-      echo "gracefulShutdown fluent-bit process start @ `date --rfc-3339=seconds`"
+      echo "gracefulShutdown start @ $(date +'%Y-%m-%dT%H:%M:%S')"
+      echo "gracefulShutdown fluent-bit process start @ $(date +'%Y-%m-%dT%H:%M:%S')"
       pkill -f fluent-bit
-      sleep ${FBIT_SERVICE_GRACE_INTERVAL_SECONDS} # wait for the fluent-bit graceful shutdown before terminating mdsd to complete pending tasks if any
-      echo "gracefulShutdown fluent-bit process complete @ `date --rfc-3339=seconds`"
-      echo "gracefulShutdown mdsd process start @ `date --rfc-3339=seconds`"
+      sleep "${FBIT_SERVICE_GRACE_INTERVAL_SECONDS}" # wait for the fluent-bit graceful shutdown before terminating mdsd to complete pending tasks if any
+      echo "gracefulShutdown fluent-bit process complete @ $(date +'%Y-%m-%dT%H:%M:%S')"
+      echo "gracefulShutdown mdsd process start @ $(date +'%Y-%m-%dT%H:%M:%S')"
       pkill -f mdsd
-      echo "gracefulShutdown mdsd process compelete @ `date --rfc-3339=seconds`"
-      echo "gracefulShutdown complete @ `date --rfc-3339=seconds`"
+      echo "gracefulShutdown mdsd process compelete @ $(date +'%Y-%m-%dT%H:%M:%S')"
+      echo "gracefulShutdown complete @ $(date +'%Y-%m-%dT%H:%M:%S')"
 }
 
 # please use this instead of adding env vars to bashrc directly
@@ -1042,7 +1044,7 @@ if [ ! -e "/etc/config/kube.conf" ]; then
                   AZMON_CONTAINER_LOG_SCHEMA_VERSION="v2"
                   echo "export AZMON_CONTAINER_LOG_SCHEMA_VERSION=$AZMON_CONTAINER_LOG_SCHEMA_VERSION" >>~/.bashrc
 
-                  if [ -z $FBIT_SERVICE_GRACE_INTERVAL_SECONDS ]; then
+                  if [ -z "$FBIT_SERVICE_GRACE_INTERVAL_SECONDS" ]; then
                        export FBIT_SERVICE_GRACE_INTERVAL_SECONDS="10"
                   fi
                   echo "Using FluentBit Grace Interval seconds:${FBIT_SERVICE_GRACE_INTERVAL_SECONDS}"
@@ -1050,7 +1052,7 @@ if [ ! -e "/etc/config/kube.conf" ]; then
 
                   source ~/.bashrc
                   # Delay FBIT service start to ensure MDSD is ready in 1P mode to avoid data loss
-                  sleep ${FBIT_SERVICE_GRACE_INTERVAL_SECONDS}
+                  sleep "${FBIT_SERVICE_GRACE_INTERVAL_SECONDS}"
             fi
             echo "using fluentbitconf file: ${fluentBitConfFile} for fluent-bit"
             if [ "$CONTAINER_RUNTIME" == "docker" ]; then
@@ -1162,6 +1164,8 @@ fi
 endTime=$(date +%s)
 elapsed=$((endTime-startTime))
 echo "startup script took: $elapsed seconds"
+
+echo "startup script end @ $(date +'%Y-%m-%dT%H:%M:%S')"
 
 shutdown() {
      if [ "${GENEVA_LOGS_INTEGRATION_SERVICE_MODE}" == "true" ]; then
